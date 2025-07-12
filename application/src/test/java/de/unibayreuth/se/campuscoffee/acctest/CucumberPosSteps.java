@@ -19,6 +19,7 @@ import org.testcontainers.containers.PostgreSQLContainer;
 
 import java.util.List;
 import java.util.Map;
+import de.unibayreuth.se.campuscoffee.TestUtil;
 
 import static de.unibayreuth.se.campuscoffee.TestUtil.*;
 import static de.unibayreuth.se.campuscoffee.TestUtil.configurePostgresContainers;
@@ -67,7 +68,7 @@ public class CucumberPosSteps {
     private List<PosDto> createdPosList;
 
     @DataTableType
-    public PosDto toPosDto(Map<String,String> row) {
+    public PosDto toPosDto(Map<String, String> row) {
         return PosDto.builder()
                 .name(row.get("name"))
                 .description(row.get("description"))
@@ -104,5 +105,23 @@ public class CucumberPosSteps {
         assertThat(retrievedPosList)
                 .usingRecursiveFieldByFieldElementComparatorIgnoringFields("id", "createdAt", "updatedAt")
                 .containsExactlyInAnyOrderElementsOf(createdPosList);
+    }
+    // When -----------------------------------------------------------------------
+    @When("I update the POS {String} with the description {String}}")
+    public void updatePosWithDescription(String name, String description) {
+        PosDto originalPos = TestUtil.retrievePosByName(name);
+
+        PosDto updatedPos = originalPos.toBuilder()
+                .description(description)
+                .build();
+
+        TestUtil.updatePos(List.of(updatedPos));
+    }
+    // Then ------------------------------------------------------------------------
+    @Then("the POS {String} should have the description {String}")
+    public void thePosShouldHaveTheDescription(String name, String expectedDescription){
+        PosDto updated = TestUtil.retrievePosByName(name);
+        assert updated.getDescription().equals(expectedDescription) :
+                "Expected: " + expectedDescription + ", but got: " + updated.getDescription();
     }
 }
